@@ -1,8 +1,12 @@
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+import io
+import base64
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import DemandSerializer
-import numpy as np
 
 demand_data = []
 
@@ -43,24 +47,62 @@ def delete_row(request):
     return Response({'error': 'Invalid index'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-def generate_distributions(request):
+def calculate_cumulative_probability(request):
     global demand_data
 
     if not demand_data:
         return Response({'error': 'No demand data available'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Convertir las frecuencias en probabilidades
-    total_days = sum(item['frequency'] for item in demand_data)
-    probabilities = [item['frequency'] / total_days for item in demand_data]
+    # Calcular la probabilidad acumulada
+    cumulative_probability = 0
+    for item in demand_data:
+        cumulative_probability += item['probability']
+        item['cumulative_probability'] = cumulative_probability
 
-    # Generar distribuciones
-    mu = np.mean([item['demand'] for item in demand_data])
-    sigma = np.std([item['demand'] for item in demand_data])
-    normal_dist = np.random.normal(mu, sigma, 1000).tolist()
-    
-    poisson_dist = np.random.poisson(mu, 1000).tolist()
+    return Response({'demand_data': demand_data}, status=status.HTTP_200_OK)
 
-    return Response({
-        'normal_distribution': normal_dist,
-        'poisson_distribution': poisson_dist
-    }, status=status.HTTP_200_OK)
+@api_view(['GET'])
+def generate_plot(request):
+    global demand_data
+
+    if not demand_data:
+        return Response({'error': 'No demand data available'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Crear el gráfico
+    x = [item['demand'] for item in demand_data]
+    y = [item['cumulative_probability'] for item in demand_data]
+    probabilities = [item['probability'] for item in demand_data]
+
+    plt.figure(figsize=(10, 6))
+    bars = sns.barplot(x=x, y=y, palette="Blues_d")
+    plt.xlabel('Demanda diaria de llantas radiales')
+    plt.ylabel('Probabilidad acumulada')
+    plt.title('Distribución de probabilidad acumulada')
+
+    # Añadir etiquetas de probabilidad
+    for bar, prob in zip(bars.patches, probabilities):
+        bars.annotate(f'{prob:.2f}',
+                      (bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                      ha='center', va='bottom', color='black')
+
+    # Añadir marcadores de números aleatorios
+    for index, bar in enumerate(bars.patches):
+        if index == 0:
+            lower_bound = 1
+        else:
+            lower_bound = int(demand_data[index - 1]['cumulative_probability'] * 100) + 1
+        upper_bound = int(demand_data[index]['cumulative_probability'] * 100)
+        midpoint = (lower_bound + upper_bound) / 2
+        plt.text(midpoint / 100, bar.get_height() + 0.02, f'{lower_bound:02d}-{upper_bound:02d}', 
+                 ha='center', color='black')
+
+    # Convertir gráfico a imagen PNG
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    image_png = buf.getvalue()
+    buf.close()
+
+    # Codificar imagen en base64
+    image_base64 = base64.b64encode(image_png).decode('utf-8')
+    return Response({'image': image_base64}, status=status.HTTP_200_OK)
