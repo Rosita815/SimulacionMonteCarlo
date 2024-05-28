@@ -8,6 +8,7 @@ function App() {
   const [demandData, setDemandData] = useState([]);
   const [cumulativeData, setCumulativeData] = useState([]);
   const [plotImage, setPlotImage] = useState('');
+  const [simulatedDemand, setSimulatedDemand] = useState([]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -52,6 +53,16 @@ function App() {
     } catch (error) {
       console.error('Error al generar el gráfico:', error);
       alert('Hubo un error al generar el gráfico. Por favor, intenta de nuevo.');
+    }
+  };
+
+  const simulateDemand = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/simulate_demand/');
+      setSimulatedDemand(response.data.simulated_demand);
+    } catch (error) {
+      console.error('Error al simular la demanda:', error);
+      alert('Hubo un error al simular la demanda. Por favor, intenta de nuevo.');
     }
   };
 
@@ -168,6 +179,26 @@ function App() {
             <img src={`data:image/png;base64,${plotImage}`} alt="Gráfico de Probabilidad Acumulada" />
           </div>
         )}
+        <button onClick={simulateDemand}>Simular Demanda</button>
+        <h2>Simulación de Demanda Diaria</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Día</th>
+              <th>Número Aleatorio</th>
+              <th>Demanda Diaria Simulada</th>
+            </tr>
+          </thead>
+          <tbody>
+            {simulatedDemand.map((row, index) => (
+              <tr key={index}>
+                <td>{row.day}</td>
+                <td>{row.random_number}</td>
+                <td>{row.demand}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
