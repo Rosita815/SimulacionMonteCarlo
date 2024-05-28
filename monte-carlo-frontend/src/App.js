@@ -7,8 +7,14 @@ function App() {
   const [frequency, setFrequency] = useState('');
   const [demandData, setDemandData] = useState([]);
   const [cumulativeData, setCumulativeData] = useState([]);
+  const [totalDays, setTotalDays] = useState(10);
+  const [totalDemand, setTotalDemand] = useState(0);
+  const [averageDemand, setAverageDemand] = useState(0);
   const [plotImage, setPlotImage] = useState('');
   const [simulatedDemand, setSimulatedDemand] = useState([]);
+  const [showPlotButton, setShowPlotButton] = useState(false);
+  const [showSimulateButton, setShowSimulateButton] = useState(false);
+  const [showSimulationResults, setShowSimulationResults] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -20,6 +26,8 @@ function App() {
       setDemandData(response.data.demand_data);
       setDemand('');
       setFrequency('');
+      setShowPlotButton(true); // Mostrar botón de graficar después de añadir datos
+      fetchCumulativeProbability(); // Actualizar datos de probabilidad acumulada
     } catch (error) {
       console.error('Error al añadir los datos:', error);
       alert('Hubo un error al añadir los datos. Por favor, intenta de nuevo.');
@@ -30,6 +38,16 @@ function App() {
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/delete_row/', { index });
       setDemandData(response.data.demand_data);
+      if (response.data.demand_data.length === 0) {
+        setCumulativeData([]);
+        setPlotImage('');
+        setSimulatedDemand([]);
+        setShowPlotButton(false);
+        setShowSimulateButton(false);
+        setShowSimulationResults(false);
+      } else {
+        fetchCumulativeProbability(); // Actualizar datos de probabilidad acumulada
+      }
     } catch (error) {
       console.error('Error al eliminar la fila:', error);
       alert('Hubo un error al eliminar la fila. Por favor, intenta de nuevo.');
@@ -42,7 +60,9 @@ function App() {
       setCumulativeData(response.data.demand_data);
     } catch (error) {
       console.error('Error al obtener la probabilidad acumulada:', error);
-      alert('Hubo un error al obtener la probabilidad acumulada. Por favor, intenta de nuevo.');
+      if (demandData.length > 0) {
+        alert('Hubo un error al obtener la probabilidad acumulada. Por favor, intenta de nuevo.');
+      }
     }
   };
 
@@ -50,6 +70,7 @@ function App() {
     try {
       const response = await axios.get('http://127.0.0.1:8000/api/generate_plot/');
       setPlotImage(response.data.image);
+      setShowSimulateButton(true); // Mostrar botón de simular demanda después de graficar
     } catch (error) {
       console.error('Error al generar el gráfico:', error);
       alert('Hubo un error al generar el gráfico. Por favor, intenta de nuevo.');
@@ -58,16 +79,38 @@ function App() {
 
   const simulateDemand = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/simulate_demand/');
+      const response = await axios.get(`http://127.0.0.1:8000/api/simulate_demand/?days=${totalDays}`);
       setSimulatedDemand(response.data.simulated_demand);
+      setTotalDemand(response.data.total_demand);
+      setAverageDemand(response.data.average_demand);
+      setShowSimulationResults(true); // Mostrar resultados de la simulación después de simular la demanda
     } catch (error) {
       console.error('Error al simular la demanda:', error);
       alert('Hubo un error al simular la demanda. Por favor, intenta de nuevo.');
     }
   };
 
+  const handleReset = async () => {
+    try {
+      await axios.post('http://127.0.0.1:8000/api/reset_simulation/');
+      setDemandData([]);
+      setCumulativeData([]);
+      setPlotImage('');
+      setSimulatedDemand([]);
+      setShowPlotButton(false);
+      setShowSimulateButton(false);
+      setShowSimulationResults(false);
+      setTotalDays(10); // Reset total days to default
+    } catch (error) {
+      console.error('Error al resetear la simulación:', error);
+      alert('Hubo un error al resetear la simulación. Por favor, intenta de nuevo.');
+    }
+  };
+
   useEffect(() => {
-    fetchCumulativeProbability();
+    if (demandData.length > 0) {
+      fetchCumulativeProbability();
+    }
   }, [demandData]);
 
   const totalFrequency = demandData.reduce((acc, item) => acc + item.frequency, 0);
@@ -76,6 +119,7 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>Simulación Monte Carlo</h1>
+        <button className="custom-button" onClick={handleReset}>Nueva Simulación</button>
       </header>
 
       <div>
@@ -172,33 +216,55 @@ function App() {
           </tbody>
         </table>
         <hr />
-        <button onClick={generatePlot}>Graficar</button>
+        {showPlotButton && (
+          <button className="custom-button" onClick={generatePlot}>Graficar</button>
+        )}
         {plotImage && (
           <div>
             <h2>Gráfico de Probabilidad Acumulada</h2>
             <img src={`data:image/png;base64,${plotImage}`} alt="Gráfico de Probabilidad Acumulada" />
           </div>
         )}
-        <button onClick={simulateDemand}>Simular Demanda</button>
-        <h2>Simulación de Demanda Diaria</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Día</th>
-              <th>Número Aleatorio</th>
-              <th>Demanda Diaria Simulada</th>
-            </tr>
-          </thead>
-          <tbody>
-            {simulatedDemand.map((row, index) => (
-              <tr key={index}>
-                <td>{row.day}</td>
-                <td>{row.random_number}</td>
-                <td>{row.demand}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <hr />
+        {showSimulateButton && (
+          <>
+            <label>
+              Cantidad de Días a Simular:
+              <input
+                type="number"
+                value={totalDays}
+                onChange={(e) => setTotalDays(e.target.value)}
+                required
+              />
+            </label>
+            <button className="custom-button" onClick={simulateDemand}>Simular Demanda</button>
+          </>
+        )}
+        {showSimulationResults && (
+          <>
+            <h2>Simulación de Demanda Diaria</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Día</th>
+                  <th>Número Aleatorio</th>
+                  <th>Demanda Diaria Simulada</th>
+                </tr>
+              </thead>
+              <tbody>
+                {simulatedDemand.map((row, index) => (
+                  <tr key={index}>
+                    <td>{row.day}</td>
+                    <td>{row.random_number}</td>
+                    <td>{row.demand}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <h3>Demanda Total: {totalDemand}</h3>
+            <h3>Demanda Diaria Promedio: {averageDemand.toFixed(2)}</h3>
+          </>
+        )}
       </div>
     </div>
   );

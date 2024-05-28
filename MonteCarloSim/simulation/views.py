@@ -1,7 +1,6 @@
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-import random
 import io
 import base64
 from rest_framework.decorators import api_view
@@ -20,10 +19,8 @@ def calculate_probability(request):
         demand = serializer.validated_data['demand']
         frequency = serializer.validated_data['frequency']
 
-        # Añadir la nueva demanda y frecuencia a la lista
         demand_data.append({'demand': demand, 'frequency': frequency})
 
-        # Recalcular probabilidades
         total_days = sum(item['frequency'] for item in demand_data)
         for item in demand_data:
             item['probability'] = item['frequency'] / total_days
@@ -39,7 +36,6 @@ def delete_row(request):
     if index is not None and 0 <= index < len(demand_data):
         demand_data.pop(index)
         
-        # Recalcular probabilidades
         total_days = sum(item['frequency'] for item in demand_data)
         for item in demand_data:
             item['probability'] = item['frequency'] / total_days
@@ -54,7 +50,6 @@ def calculate_cumulative_probability(request):
     if not demand_data:
         return Response({'error': 'No demand data available'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Calcular la probabilidad acumulada
     cumulative_probability = 0
     for item in demand_data:
         cumulative_probability += item['probability']
@@ -69,7 +64,6 @@ def generate_plot(request):
     if not demand_data:
         return Response({'error': 'No demand data available'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Crear el gráfico
     x = [item['demand'] for item in demand_data]
     y = [item['cumulative_probability'] for item in demand_data]
     probabilities = [item['probability'] for item in demand_data]
@@ -80,12 +74,10 @@ def generate_plot(request):
     plt.ylabel('Probabilidad acumulada')
     plt.title('Gráfico de Probabilidad Acumulada')
 
-    # Añadir etiquetas de probabilidad
     for bar, prob in zip(bars, probabilities):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), f'{prob:.2f}',
                  ha='center', va='bottom', color='black')
 
-    # Añadir marcadores de números aleatorios al lado derecho
     for index, bar in enumerate(bars):
         if index == 0:
             lower_bound = 1
@@ -94,28 +86,29 @@ def generate_plot(request):
         upper_bound = int(demand_data[index]['cumulative_probability'] * 100)
         midpoint = (lower_bound + upper_bound) / 2
 
-        # Añadir etiqueta del intervalo
         plt.text(1.02, bar.get_height(), f'{lower_bound:02d}-{upper_bound:02d}', 
                  ha='left', va='center', color='black', transform=plt.gca().transAxes)
-        
-        # Añadir líneas de marcador desde el punto medio superior de cada barra hacia la derecha
+
         plt.plot([bar.get_x() + bar.get_width() / 2, len(x)], [bar.get_height(), bar.get_height()],
                  color='#D2691E', linestyle='--')
 
-    # Ajustar límites del gráfico para asegurar que las líneas lleguen hasta el final
     plt.xlim(-0.5, max(x) + 0.5)
     plt.ylim(0, 1)
 
-    # Convertir gráfico a imagen PNG
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight')
     buf.seek(0)
     image_png = buf.getvalue()
     buf.close()
 
-    # Codificar imagen en base64
     image_base64 = base64.b64encode(image_png).decode('utf-8')
     return Response({'image': image_base64}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+def reset_simulation(request):
+    global demand_data
+    demand_data = []
+    return Response({'message': 'Simulation reset successful'}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def simulate_demand(request):
@@ -124,24 +117,27 @@ def simulate_demand(request):
     if not demand_data:
         return Response({'error': 'No demand data available'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Generar números aleatorios
-    random_numbers = [random.randint(1, 100) for _ in range(10)]
+    total_days = int(request.GET.get('days', 10))
+    random_numbers = np.random.randint(1, 101, total_days)
     simulated_demand = []
+    total_demand = 0
 
-    # Calcular demanda diaria simulada
-    for num in random_numbers:
+    for day, random_number in enumerate(random_numbers, 1):
         for item in demand_data:
-            lower_bound = 1 if demand_data.index(item) == 0 else int(demand_data[demand_data.index(item) - 1]['cumulative_probability'] * 100) + 1
+            lower_bound = int(item['cumulative_probability'] * 100) - int(item['probability'] * 100) + 1
             upper_bound = int(item['cumulative_probability'] * 100)
-            if lower_bound <= num <= upper_bound:
-                simulated_demand.append({'day': len(simulated_demand) + 1, 'random_number': num, 'demand': item['demand']})
+            if lower_bound <= random_number <= upper_bound:
+                simulated_demand.append({
+                    'day': day,
+                    'random_number': random_number,
+                    'demand': item['demand']
+                })
+                total_demand += item['demand']
                 break
 
-    total_demand = sum(item['demand'] for item in simulated_demand)
-    average_demand = total_demand / 10
+    average_demand = total_demand / total_days
 
     return Response({
-        'random_numbers': random_numbers,
         'simulated_demand': simulated_demand,
         'total_demand': total_demand,
         'average_demand': average_demand

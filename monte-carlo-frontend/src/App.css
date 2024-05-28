@@ -1,133 +1,75 @@
 .App {
   text-align: center;
   font-family: 'Roboto', sans-serif;
-  background-color: #f4f4f9;
-  color: #333;
 }
 
 .App-header {
-  background-color: #1c3b57;
-  padding: 20px;
-  color: white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.App-header h1 {
-  margin: 0;
-  font-size: 2.5em;
-}
-
-form {
-  margin: 20px 0;
+  background-color: #004080;
+  min-height: 10vh;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-}
-
-form label {
-  font-size: 1.1em;
-  margin: 10px 0;
-}
-
-form input {
-  padding: 10px;
-  font-size: 1em;
-  margin-top: 5px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 200px;
-}
-
-form button {
-  margin-top: 20px;
-  padding: 10px 20px;
-  font-size: 1.1em;
+  justify-content: space-between;
+  padding: 0 20px;
   color: white;
-  background-color: #1c3b57;
+}
+
+h1 {
+  font-size: 2.5rem;
+  font-weight: 500;
+}
+
+h2 {
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: #004080;
+}
+
+.custom-button {
+  background-color: #004080;
+  color: white;
   border: none;
-  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  margin: 10px;
   cursor: pointer;
+  border-radius: 5px;
   transition: background-color 0.3s ease;
 }
 
-form button:hover {
-  background-color: #145a7c;
+.custom-button:hover {
+  background-color: #003060;
+}
+
+.reset-button {
+  margin-left: auto;
 }
 
 table {
   width: 80%;
   margin: 20px auto;
   border-collapse: collapse;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-thead {
-  background-color: #1c3b57;
-  color: white;
 }
 
 th, td {
-  padding: 15px;
   border: 1px solid #ddd;
+  padding: 8px;
   text-align: center;
 }
 
 th {
-  font-size: 1.1em;
-}
-
-tbody tr:nth-child(even) {
-  background-color: #f2f2f2;
-}
-
-tbody tr:hover {
-  background-color: #ddd;
-}
-
-button {
-  padding: 10px 20px;
-  font-size: 1em;
+  background-color: #004080;
   color: white;
-  background-color: #1c3b57;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+  font-weight: 500;
 }
 
-button:hover {
-  background-color: #145a7c;
+td {
+  font-size: 1rem;
+  color: #333;
 }
 
 img {
-  max-width: 100%;
+  max-width: 90%;
   height: auto;
-  margin: 20px 0;
-}
-
-h2 {
-  color: #1c3b57;
-}
-
-hr {
-  width: 80%;
-  margin: 20px auto;
-  border: 0;
-  height: 1px;
-  background: #ccc;
-}
-
-@media (max-width: 768px) {
-  table {
-    width: 100%;
-  }
-
-  form input {
-    width: 100%;
-  }
-
-  form button, button {
-    width: 100%;
-    padding: 15px;
-  }
+  margin: 20px;
 }
