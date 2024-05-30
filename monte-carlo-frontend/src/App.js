@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
+import Loader from './Loader';
 
 function App() {
   const [demand, setDemand] = useState('');
@@ -10,11 +11,14 @@ function App() {
   const [totalDays, setTotalDays] = useState(10);
   const [totalDemand, setTotalDemand] = useState(0);
   const [averageDemand, setAverageDemand] = useState(0);
+  const [roundedAverageDemand, setRoundedAverageDemand] = useState(0); // Nuevo estado para el promedio redondeado
   const [plotImage, setPlotImage] = useState('');
   const [simulatedDemand, setSimulatedDemand] = useState([]);
   const [showPlotButton, setShowPlotButton] = useState(false);
   const [showSimulateButton, setShowSimulateButton] = useState(false);
   const [showSimulationResults, setShowSimulationResults] = useState(false);
+  const [loading, setLoading] = useState(false); // Nuevo estado para el loader
+  const plotSectionRef = useRef(null); // Referencia a la sección del gráfico
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -67,14 +71,26 @@ function App() {
   };
 
   const generatePlot = async () => {
-    try {
-      const response = await axios.get('http://127.0.0.1:8000/api/generate_plot/');
-      setPlotImage(response.data.image);
-      setShowSimulateButton(true); // Mostrar botón de simular demanda después de graficar
-    } catch (error) {
-      console.error('Error al generar el gráfico:', error);
-      alert('Hubo un error al generar el gráfico. Por favor, intenta de nuevo.');
+    setLoading(true); // Mostrar la animación del loader
+    setPlotImage(''); // Limpiar la imagen del gráfico anterior
+    setShowSimulateButton(false)
+    setShowSimulationResults(false)
+    setTotalDays(10);
+    if (plotSectionRef.current) {
+      plotSectionRef.current.scrollIntoView({ behavior: 'smooth' }); // Mover el scroll hacia abajo
     }
+    setTimeout(async () => {
+      try {
+        const response = await axios.get('http://127.0.0.1:8000/api/generate_plot/');
+        setPlotImage(response.data.image);
+        setShowSimulateButton(true); // Mostrar botón de simular demanda después de graficar
+        setLoading(false); // Ocultar la animación del loader
+      } catch (error) {
+        console.error('Error al generar el gráfico:', error);
+        alert('Hubo un error al generar el gráfico. Por favor, intenta de nuevo.');
+        setLoading(false); // Ocultar la animación del loader en caso de error
+      }
+    }, 6000); // 6 segundos de delay
   };
 
   const simulateDemand = async () => {
@@ -83,6 +99,7 @@ function App() {
       setSimulatedDemand(response.data.simulated_demand);
       setTotalDemand(response.data.total_demand);
       setAverageDemand(response.data.average_demand);
+      setRoundedAverageDemand(response.data.rounded_average_demand); // Establecer el promedio redondeado
       setShowSimulationResults(true); // Mostrar resultados de la simulación después de simular la demanda
     } catch (error) {
       console.error('Error al simular la demanda:', error);
@@ -219,12 +236,15 @@ function App() {
         {showPlotButton && (
           <button className="custom-button" onClick={generatePlot}>Graficar</button>
         )}
-        {plotImage && (
-          <div>
-            <h2>Gráfico de Probabilidad Acumulada</h2>
-            <img src={`data:image/png;base64,${plotImage}`} alt="Gráfico de Probabilidad Acumulada" />
-          </div>
-        )}
+        <div className="loader-container" ref={plotSectionRef}> {/* Referencia a la sección del gráfico */}
+          {loading && <Loader />} {/* Mostrar el loader mientras se genera el gráfico */}
+          {plotImage && !loading && (
+            <div>
+              <h2>Gráfico de Probabilidad Acumulada</h2>
+              <img src={`data:image/png;base64,${plotImage}`} alt="Gráfico de Probabilidad Acumulada" />
+            </div>
+          )}
+        </div>
         <hr />
         {showSimulateButton && (
           <>
@@ -263,6 +283,7 @@ function App() {
             </table>
             <h3>Demanda Total: {totalDemand}</h3>
             <h3>Demanda Diaria Promedio: {averageDemand.toFixed(2)}</h3>
+            <h3>Demanda Diaria Promedio Redondeada: {roundedAverageDemand}</h3> {/* Mostrar el promedio redondeado */}
           </>
         )}
       </div>

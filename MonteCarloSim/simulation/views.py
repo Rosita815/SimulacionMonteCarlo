@@ -136,9 +136,11 @@ def simulate_demand(request):
                 break
 
     average_demand = total_demand / total_days
+    rounded_average_demand = round(average_demand)
 
     return Response({
         'simulated_demand': simulated_demand,
         'total_demand': total_demand,
-        'average_demand': average_demand
+        'average_demand': average_demand,
+        'rounded_average_demand': rounded_average_demand
     }, status=status.HTTP_200_OK)

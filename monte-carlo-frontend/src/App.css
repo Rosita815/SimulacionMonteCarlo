@@ -32,9 +32,22 @@ h2 {
   padding: 10px 20px;
   font-size: 1rem;
   margin: 10px;
+  margin-bottom: 50px;
   cursor: pointer;
   border-radius: 5px;
   transition: background-color 0.3s ease;
+}
+
+.loader-container {
+  min-height: 200px; /* Espacio mínimo para el loader */
+  position: relative;
+  margin-bottom: 20px;
+}
+
+img {
+  max-width: 90%;
+  height: auto;
+  margin: 20px;
 }
 
 .custom-button:hover {
@@ -66,10 +79,4 @@ th {
 td {
   font-size: 1rem;
   color: #333;
-}
-
-img {
-  max-width: 90%;
-  height: auto;
-  margin: 20px;
 }
