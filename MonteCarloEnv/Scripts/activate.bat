@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\Joshua\Monte Carlo\MonteCarlo\MonteCarloEnv
+set VIRTUAL_ENV=C:\Users\Usuario\AppData\Local\Programs\Python\Python312\python.exe -m venv C:\Users\Usuario\MonteCarloSimulacion\SimulacionMonteCarlo\MonteCarloEnv
 
 if not defined PROMPT set PROMPT=$P$G
 
