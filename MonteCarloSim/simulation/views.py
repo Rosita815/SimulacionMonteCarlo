@@ -7,6 +7,9 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .serializers import DemandSerializer
+from django.urls import path
+from . import views
+
 
 demand_data = []
 
