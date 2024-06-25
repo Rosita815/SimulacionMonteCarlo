@@ -80,3 +80,5 @@ export function AreaChartHero() {
     />
   );
 }
+
+export default AreaChartHero;

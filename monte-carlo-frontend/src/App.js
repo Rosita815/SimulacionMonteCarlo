@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 import Loader from './Loader';
+import AreaChartHero from './AreaChartHero';
 
 
 function App() {
