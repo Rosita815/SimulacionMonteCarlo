@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Loader from './Loader';
-
+import { Link } from "react-router-dom";
 
 function Simulacion() {
   const [demand, setDemand] = useState('');
@@ -289,8 +289,10 @@ function Simulacion() {
         )}
         
       </div>
+      <Link to="Dashboard">Haz clic para ver el Dashboard</Link>
     </div>
   );
+  
 }
 
 export default Simulacion;
