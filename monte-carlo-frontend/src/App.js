@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 import Loader from './Loader';
-import './dashborad';
-import { AreaChart } from '@tremor/react';
+
 
 function App() {
   const [demand, setDemand] = useState('');
@@ -22,6 +21,7 @@ function App() {
   const [loading, setLoading] = useState(false); // Nuevo estado para el loader
   const plotSectionRef = useRef(null); // Referencia a la sección del gráfico
 
+  
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
@@ -287,12 +287,11 @@ function App() {
             <h3>Demanda Diaria Promedio: {averageDemand.toFixed(2)}</h3>
             <h3>Demanda Diaria Promedio Redondeada: {roundedAverageDemand}</h3> {/* Mostrar el promedio redondeado */}
           </>
-          
         )}
+        
       </div>
     </div>
   );
 }
-
 
 export default App;
