@@ -69,7 +69,7 @@ def generate_plot(request):
 
     x = [item['demand'] for item in demand_data]
     y = [item['cumulative_probability'] for item in demand_data]
-    probabilities = [item['probability'] for item in demand_data]
+    probabilities = [item['cumulative_probability'] for item in demand_data]
 
     plt.figure(figsize=(14, 8))
     bars = plt.bar(x, y, color=sns.color_palette("cividis", len(x)), edgecolor='black', alpha=0.7)
